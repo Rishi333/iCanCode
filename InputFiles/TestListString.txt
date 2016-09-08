@@ -1,0 +1,21 @@
+ProgramTest{
+    Procedure :: main{
+      list string a[];
+      string name = "abc";
+      a.add[name];
+      a.add["cde"];
+      int pos = 0;
+      string b = a.getVal[pos];
+      put "Val ", b;
+      string c = a.getVal[1];
+      put "Val ", c;
+      a.remove["cde"];
+      a.setVal[pos,"what"];
+      int d = a.getIndex["what"];
+      put "Val ", d;
+      d = a.getSize[];
+      put "Val ", d;
+
+    }
+}
+

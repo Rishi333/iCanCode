@@ -1,0 +1,26 @@
+Program{
+    Procedure :: main{
+
+       // Awesome Type Checking
+
+
+       // basic Declares No Errors
+
+       int intDecl = 9;
+       string strDecl= "Hello";
+       boolean boolDecl= true;
+       double doDecl= 4.5;
+
+       //basic Error
+       int int int i=3;
+
+
+       // Type Check errors
+       int i= true;
+       string s= 5.2;
+       double asd= "Hello";// This will throw a Double Type Check Error
+       boolean b= 4;
+      
+    }
+}
+

@@ -1,0 +1,26 @@
+ProgramCool{
+    Procedure :: main{
+        int a = 4;
+        double doDob = 10.2;
+        string str= "hello";
+        a*=5;
+        a-=5;
+        // to print a constant just pass
+        put 5;
+        put "hello";
+        // to print a variable declare constant then declare as many variables as you want with a comma
+        put "Printing integer ", a;
+        put "printing Double ", doDob;
+        put "print String  ",str;
+        put "multiple variable ", a, doDob ;
+        Call second ();
+    }
+    Procedure :: second{
+        int c = 5;
+        double fort= 6.0;
+
+    }
+
+
+}
+

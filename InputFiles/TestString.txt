@@ -1,0 +1,15 @@
+ProgramAwesome{
+Procedure :: main{
+       string abc = "dog";
+       int i = abc.getSize$$;
+       put "Size ", i;
+       string temp = "b";
+       int index = abc.getIndex$temp$;
+       put "Index ", index;
+       string sub = abc.substring$0,1$;
+       put "Substring ", sub;
+
+
+}
+
+}

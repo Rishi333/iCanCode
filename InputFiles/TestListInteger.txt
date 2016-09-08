@@ -1,0 +1,19 @@
+ProgramTest{
+    Procedure :: main{
+      list int a[];
+      a.add[1];
+      a.add[2];
+      int b = a.getVal[0];
+      put "Val ", b;
+      int c = a.getVal[1];
+      put "Val ", c;
+      a.remove[2];
+      a.setVal[0,3];
+      int d = a.getIndex[3];
+      put "Val ", d;
+      d = a.getSize[];
+      put "Val ", d;
+
+    }
+}
+

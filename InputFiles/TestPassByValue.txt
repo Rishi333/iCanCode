@@ -1,0 +1,19 @@
+TestLocalVariables{
+   
+  Procedure :: main{
+    string a = 'abc';
+    put "Global variable a before call to function ", a;
+    Call second(string a);
+    put "After return a is ", a;
+    //put "Changed value is ", b ;
+  }
+
+  Procedure :: second`string f`{
+      string b = f;
+      put "Passed value is ", b ;
+      b = 'dog';
+      put "Changed value is ", b ;
+   
+  }
+
+}

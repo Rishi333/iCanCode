@@ -1,0 +1,54 @@
+BubbleSort{
+    Procedure :: main{
+    list int a[];
+    a.add[1];
+    a.add[2];
+    a.add[6];
+    a.add[4];
+    a.add[3];
+    a.add[9];
+    a.add[5];
+    a.add[7];
+    a.add[8];
+
+
+    boolean swappedThisTime = true;
+    int swapVal = a.getVal[0];
+    int size = a.getSize[];
+
+    put "Printing unsorted order";
+     for(int k=0; k<size; k++;){
+      int tempVal = a.getVal[k];
+      put " ", tempVal ;
+    }
+    put "";
+    put "";
+
+
+    
+    for(int i=0; (i<(size-1)); i++;){
+          for(int j=0; j<size-1; j++;){
+           swappedThisTime = false;
+           int temp1 = a.getVal[j];
+           int temp2 = a.getVal[j+1];
+           if(temp1>temp2){
+             swapVal = temp1;
+             a.setVal[j,temp2];
+             a.setVal[j+1,swapVal];
+             swappedThisTime = true;
+            }
+          }
+          if(swappedThisTime==false){
+          i= size+2;//exit the loop
+          }
+    }
+    put "Printing sorted order";
+     for(int w=0; w<size; w++;){
+      int tempVal = a.getVal[w];
+      put " ", tempVal ;
+    }
+
+ }
+}
+
+

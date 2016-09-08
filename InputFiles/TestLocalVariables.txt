@@ -1,0 +1,20 @@
+TestLocalVariables{
+   
+  Procedure :: main{
+    int a =10;
+    put "Printing variable a ", a;
+    Call second;
+    put "Printing Variable a ", a;
+    Call third;
+    put "Printing Variable a ", a;
+  }
+  Procedure :: second{
+      put "Declaring local variable a as 5";
+      local int a =5;
+   
+  }
+  Procedure :: third{
+     put "Declaring global variable a as 15";
+     int a =15;
+  }
+}

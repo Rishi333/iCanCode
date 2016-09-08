@@ -1,0 +1,38 @@
+ProgramTest{
+    Procedure :: main{
+        int a = 4;
+        int b = 5;
+        int c = 10;
+        
+        c = a + b;
+        put "C is add", c;
+
+        double doDob = 10.2;
+        string str= "hello";
+        //TESTING PRINTING
+        // to print a constant just pass
+        put 5;
+        put "hello";
+        // to print a variable declare constant then declare as many variables as you want with a comma
+
+        put "printing Double ", doDob;
+        put "print String ",str;
+        put "multiple variable ", a, doDob ;
+        put "Initial", a;
+        a+=b;
+        put "Plus equals", a;
+        a-=b;
+        put "Minus equals", a;
+        a*=b;
+        put "Mult equals", a;
+        a/=b;
+        put "Div equals", a;
+        put "Initial", a;
+        a++;
+        put "Increment operator", a;
+        a--;
+        put "Decrement operator", a;
+
+    }
+}
+

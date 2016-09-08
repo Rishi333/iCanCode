@@ -1,0 +1,16 @@
+ProgramTest{
+    Procedure :: main{
+      map{string,int} a;
+      string abc = "abc";
+      int pos = 4;
+      a.add{abc,pos};
+      a.add{"cde",pos};
+      a.remove{"cde"};
+      int b = a.getVal{abc};
+      put "B is ", b;
+      int siz = a.getSize{};
+      put "Size is ",siz ;     
+
+    }
+}
+

@@ -1,0 +1,130 @@
+TheGreatGame{
+    Procedure :: declareVariables{
+     int input=0;
+     string weaponOne="";
+     string weaponTwo="";
+     string classChoice="";
+    }
+    Procedure :: main{
+     boolean continueGame=true;
+     while(continueGame==true){
+      Call StartJourney;
+      Call BattleMonster;
+      Call PlayPredict;
+
+      put "You have been enlightened physically and mentally";
+      put "Do you want to reach enlightenment with another Class or quit";
+      put "1 Play Again with same or new Hero";
+      put "2 quit";
+      Call inputInt;
+      if(input!=1){
+       continueGame=false;
+      }
+     }
+
+     
+    }
+    Procedure :: PlayPredict{
+     put "You have reached the House of a Fortune Teller";
+     put "You go in and the fortune teller agrees to train you in prediction";
+     put "The fortune teller says I have picked a number from one to a thousand";
+     put "Can you guess my number";
+     boolean foundNumber = false;
+     while(foundNumber==false){
+      Call inputInt;
+      if(input==276){
+      put "You have predicted the fortune tellers number very quickly";
+      put "You are enlightened in the field of mentalism";
+      put "";
+      put "";
+      foundNumber=true;
+      }elseif(input>400){
+       put "You have guessed too high";
+       put "Guess Again and learn to Become one with nature";
+      }elseif(input<200){
+       put "You have guessed too low";
+       put "Guess Again and feel the force";
+      }elseif(input>276){
+       put "You have guessed high but you are close";
+       put "guess again and a clue that one of the numbers is a 7";
+      }elseif(input<276){
+       put "You have guessed low but you are close";
+       put "Guess Again and one of the numbers is a 6";
+      }
+     }
+    }
+    Procedure :: BattleMonster{
+     put "You have started your journey ",classChoice;
+     boolean success=false;
+     put "A Wild Centaur Appears and is About to Attack";
+     put "What will you do";
+     
+     while(success!=true){
+      put "1 Attack with ", weaponOne;
+      put "2 Attack with ", weaponTwo;
+      put "3 Try to Reason with the beast";
+      Call inputInt;
+       if(input==1){
+        put "The Centaur Dodged your ", weaponOne;
+       }elseif(input==2){
+        put "You have killed the beast and continue your journey";
+        put "You are enlightened in the field of physical defense and offense";
+        put "";
+        success=true;
+       }elseif(input==3){
+        put "The Beast has stopped and argues Kantian ethics";
+        put "The Beast sees its impossible to live if he universally does not attack you";
+        put "Thus he must still commence battle";
+       }
+     }
+    }
+    Procedure :: StartJourney{
+     put "You have started on a journey to enlightenment";
+     put "Your journey starts with you choosing your class";
+     put "Do you want to be a";
+     put "1 Mage";
+     put "2 Warrior";
+     put "3 Thief";
+     Call declareVariables;
+     Call inputInt;
+     if(input==1){
+      put "You have chosen the Mage";
+      Call CreateMage;
+     }elseif(input==2){
+      put "You have chosen Warrior";
+      Call CreateWarrior;
+     }elseif(input==3){
+      put "You have chosen Thief";
+      Call CreateThief;
+     }
+    }
+    Procedure :: CreateWarrior{
+     classChoice= "Warrior";
+     weaponOne="Battle Axe";
+     weaponTwo="Great Sword";
+     
+    }
+    Procedure :: CreateMage{
+     classChoice= "Mage";    
+     weaponOne="Fire Bolt";
+     weaponTwo="Frost Bolt";
+    }
+    Procedure :: CreateThief{
+     classChoice= "Thief";    
+     weaponOne="Dagger";
+     weaponTwo="Long Bow";
+    }
+    Procedure :: inputInt{
+     put "Please enter a valid Number";
+     input = readInt;
+     put "";
+     put "";
+     put "";
+     put "CONTINUED HERE";
+    
+    }
+}
+
+
+
+

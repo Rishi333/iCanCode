@@ -1,0 +1,21 @@
+Program{
+    Procedure :: first{
+
+       // Awesome Error Recovery 2.0
+       
+       int intDecl = 9;// basic Declare
+       string dc= "No Error";
+       //f=3// Catching incorrect Sym Tab Lookup integer
+      // er= "look"; // Catching incorrect Sym Tab Lookup String
+       
+       //ASDF // Catching basic error
+       float      
+       intDecl =5; //Immediate Recover: this will looked up
+
+
+       double asd= "Hello";
+       string s= 5.2;
+       int int int i=5;// error Recovered and variable i will be in symbol table
+    }
+}
+

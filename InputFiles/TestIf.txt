@@ -1,0 +1,24 @@
+ProgramTestTwo{
+    Procedure :: main{
+    int a = 5;
+    int b = 6;
+    if (2>4 & 3>4){
+    put "if wokred";
+    }elseif(4>2){
+    if(1>2){
+    put "else if worked";
+    }else{
+    put "nesting works";
+    }
+    }else {
+    put "else should always work";
+    }
+    put "hello", a;
+
+
+ }
+    Procedure :: second{
+    }
+}
+
+

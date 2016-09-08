@@ -1,0 +1,932 @@
+options{
+    NODE_EXTENDS="wci.intermediate.icodeimpl.ICodeNodeImpl";
+    MULTI=true;
+    VISITOR=true;
+DEBUG_PARSER=false;
+}
+PARSER_BEGIN(ExprParser)
+package wci.frontend;
+
+import java.util.ArrayList;
+import java.io.*;
+
+import wci.intermediate.*;
+import wci.intermediate.symtabimpl.*;
+import wci.backend.*;
+import wci.util.*;
+
+import static wci.intermediate.symtabimpl.SymTabKeyImpl.*;
+import static wci.intermediate.symtabimpl.DefinitionImpl.*;
+import wci.intermediate.typeimpl.*;
+import static wci.intermediate.typeimpl.TypeKeyImpl.*;
+import static wci.intermediate.symtabimpl.RoutineCodeImpl.*;
+import static wci.intermediate.symtabimpl.SymTabKeyImpl.*;
+import static wci.intermediate.icodeimpl.ICodeKeyImpl.*;
+
+public class ExprParser
+{
+
+    private static final String SOURCE_SUFFIX = ".txt";
+    private static final String OUTPUT_SUFFIX = ".j";
+
+    private static TypeSpec type;
+    private static boolean typeBool=false;
+
+    private static SymTabStack symTabStack;
+    private static SymTabEntry programId;
+    private static int index=0;
+    private static boolean errorThrown = false;
+
+    public static void main(String[] args)
+        throws Exception
+    {
+    	// Create and initialize the symbol table stack.
+        symTabStack = SymTabFactory.createSymTabStack();
+        Predefined.initialize(symTabStack);
+
+ // Parse a program.
+        Reader    reader = new FileReader(args[0]);
+        ExprParser parser = new ExprParser(reader);
+	SimpleNode rootNode= parser.Program();
+		   
+	
+        // Print the cross-reference table.
+       // CrossReferencer crossReferencer = new CrossReferencer();
+        //crossReferencer.print(symTabStack);
+
+        // Visit the parse tree nodes to decorate them with type information.
+        ExprParserVisitorAdapter typeVisitor = new ExprParserVisitorAdapter();
+        rootNode.jjtAccept(typeVisitor, rootNode);
+
+        // Create and initialize the ICode wrapper for the parse tree.
+        ICode iCode = ICodeFactory.createICode();
+        iCode.setRoot(rootNode);
+        programId.setAttribute(ROUTINE_ICODE, iCode);
+        
+        // Print the parse tree.
+        //ParseTreePrinter treePrinter = new ParseTreePrinter(System.out);
+        //treePrinter.print(symTabStack);
+
+        // Process the source file path which ends in .pcl
+        // and create the output file path which ends in .j
+        String sourceFilePath = args[0];
+        int truncatedLength = sourceFilePath.length() - SOURCE_SUFFIX.length();
+        int suffixIndex = sourceFilePath.lastIndexOf(SOURCE_SUFFIX);
+        String objectFilePath = (suffixIndex == truncatedLength)
+            ?  "OutputFiles/" +sourceFilePath.substring(0, truncatedLength) +OUTPUT_SUFFIX
+            : "OutputFiles/" + sourceFilePath + OUTPUT_SUFFIX;
+        if(errorThrown==false){
+            // Create the compiler backend and generate code.
+            Backend backend = BackendFactory.createBackend("compile");
+            backend.process(iCode, symTabStack, objectFilePath);
+            System.out.println("Parsing has ended and .j file has been generated!");            
+        }else{// Print error
+            System.out.println("Error(s) have been thrown, please fix and recompile");
+        }
+	}
+
+
+    }
+
+PARSER_END(ExprParser)
+
+
+SKIP : {
+   <IGNORE : [" " , "\n", "\t"]> |
+   <SINGLELINECOMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
+| < NEWLINE: ["\n", "\r"] >
+}
+SKIP :
+{
+  "/*" : WithinComment
+
+}
+<WithinComment> SKIP :
+{
+  "*/" : DEFAULT
+
+}
+
+<WithinComment> MORE :
+{
+  <~[]>
+}
+
+TOKEN:
+{
+
+<SPECIALSYMBOL:  "@" | "%" | "^" |
+ "?" | "\'"  | "<<" | ">>" | "|=" | "%="|
+"&=" | "^="   | "<<=" | ">>=" |"\""   >
+
+
+|
+<SSAnd: "&">
+
+|
+<SSFunc: "`">
+
+|
+<SSOr: "|">
+
+|
+<SSNot: "!">
+
+|
+<SSDollar : "$">
+
+|
+<SSL: "<">
+
+|
+<SSLE: "<=">
+
+|
+<SSG: ">">
+
+|
+<SSGE: ">=">
+
+|
+<SSNE: "!=">
+
+|
+<SSPlus: "+">
+
+|
+<SSMinus: "-">
+
+|
+<SSStar: "*">
+
+|
+<SSDivide: "/">
+
+|
+<SSplusplus: "++">
+
+|
+<SSminusminus: "--">
+
+|
+<SSSemiColon: ";">
+
+|
+<SSPlusEquals: "+=">
+
+|
+<SSMinusEquals: "-=">
+
+|
+<SSMultEquals: "*=">
+
+|
+<SSDivideEquals: "/=">
+
+|
+<SSEquals: "=">
+
+|
+
+<SSOpenParen : "(">
+
+|
+<SSCloseParen : ")">
+
+|
+<SSOpenBraces : "{">
+
+|
+<SSCloseBraces : "}">
+
+|
+<SSOpenBracket : "[">
+
+|
+<SSCloseBracket : "]">
+
+|
+<ComparisonEquals : "==">
+
+|
+<SSComma : ",">
+
+|
+<SSColon : ":">
+|
+<SSTilda : "~">
+|
+<SSDot:".">
+}
+
+TOKEN : {
+<RESERVEDWORDLOCAL : "local">
+|
+<RESERVEDWORDREADINT :"readInt">
+|
+ <RESERVEDWORDPRINT :"put">
+|
+ <RESERVEDWORDPROCEDURE :"Procedure ::">
+|
+ <RESERVEDWORDCALL :"Call">
+| <RESERVEDWORDIF :"if">
+
+ |<RESERVEDWORDBREAK :"break">
+
+ |<RESERVEDWORDELSE :"else">
+
+ |<RESERVEDWORDELSEIF :"elseif">
+
+ |<RESERVEDWORDRETURN :"return">
+
+ |<RESERVEDWORDCASE :"case">
+
+|<RESERVEDWORDSWITCH :"switch">
+
+|<RESERVEDWORDWHILE :"while">
+
+ |<RESERVEDWORDFOR :"for">
+
+
+
+|<RESERVEDWORDINT :"int">
+
+ |<RESERVEDWORDFLOAT :"float">
+
+|<RESERVEDWORDBOOLEAN :"boolean">
+
+|<RESERVEDWORDDOUBLE :"double">
+
+|<RESERVEDWORDSTRING :"string">
+
+|<RESERVEDWORDHASHMAP :"map">
+
+|<RESERVEDWORDSET :"set">
+
+ |<RESERVEDWORDLIST :"list">
+ |<RESERVEDWORDNEW :"new">
+|<RESERVEDWORDPUBLIC :"public">
+|<RESERVEDWORDVOID :"void">
+|<DOTGETVAL: "getVal">|
+<DOTADD: "add">|
+<DOTREMOVE: "remove">|
+<DOTSETVAL: "setVal">|
+<DOTGETINDEX: "getIndex">
+|<DOTGETSIZE: "getSize">
+|<DOTGETSTRING: "getString">
+|<DOTCONTAINS: "contains">
+|<DOTSUBSTRING: "substring">
+|<DOTAPPEND: "append">
+ |<BOOLEAN :"true"|"false"> 
+| <IDENTIFIER : <LETTER> (<LETTER> | <DIGIT> )*>
+|<STRING:(<SINGLEQUOTE>|<DOUBLEQUOTE>)(<LETTER>|<DIGIT>|(<IGNORE>)*|<SPECIALSYMBOL> |<IGNORE> (<SINGLEQUOTE>|<DOUBLEQUOTE>))*  >
+|<INTEGER: <DECIMALINTEGER>|<OCTALINTEGER>|<HEXINTEGER>>
+| <DECIMALINTEGER : <NONZERO> (<DIGIT> )*>
+| <OCTALINTEGER : <ZERO>(<OCTALS> )*>
+| <HEXINTEGER : "0"("x"|"X")(<DIGIT>|<HEXLETTERS>)(<DIGIT>|<HEXLETTERS> )*>
+| <DOUBLE : <DIGIT>(<DIGIT>)* ("."|"")(<DIGIT>)*>
+| <REALNUMBER : (<DIGIT>(<DIGIT>)* ("."|"")(<DIGIT>)* ("e"|"E"|"")("+"|"-"|"")(<DIGIT>)*)>
+| <REAL_NUMBER : ("."(<DIGIT>)* ("e"|"E"|"")("+"|"-"|"")(<DIGIT>)*)>
+
+
+ | <#SINGLEQUOTE:["\'"]>
+ | <#DOUBLEQUOTE:["\""]>
+ | <#HEXLETTERS:["A"-"F","a"-"f"]>
+ | <#DIGIT  : ["0"-"9"]>
+ | <#NONZERO  : ["1"-"9"]>
+ | <#LETTER : ["a"-"z","A"-"Z","_"]>
+ | <#OCTALS: ["0"-"7"]>
+ | <#ZERO : ["0"]>
+ | <ERROR   : (~["\r", "\n"])>
+}
+
+JAVACODE
+String handleError(Token token)
+{
+    System.out.println("*** ERROR: Line " + token.beginLine +
+                       " after \"" + token.image + "\"");
+
+    Token t;
+
+    
+        t = getNextToken();
+   
+    errorThrown = true;// throw error so we do not compile backend
+    return t.image;
+}
+
+void Error() : {} 
+{
+<ERROR>       
+}
+       
+SimpleNode Program() : {}
+{
+
+(try{
+<IDENTIFIER> {
+	programId = symTabStack.enterLocal(token.image);
+        programId.setDefinition(DefinitionImpl.PROGRAM);
+        programId.setAttribute(ROUTINE_SYMTAB, symTabStack.push());
+        symTabStack.setProgramId(programId);
+//  deprecated      index=0;// Every procedure has new indx at 0
+
+}<SSOpenBraces>
+(Procedure())*
+<SSCloseBraces>
+}catch(ParseException ex){
+handleError(ex.currentToken);
+System.out.println("Main Program Structure thrown!");
+})
+{
+
+return jjtThis;
+}
+
+}
+
+void ProcedureCall() :{}
+{
+ <RESERVEDWORDCALL> <IDENTIFIER>{
+jjtThis.setAttribute(VALUE,token.image);
+}
+ (ValuePass())?<SSSemiColon>
+}
+
+void Procedure() : {}
+{
+(<RESERVEDWORDPROCEDURE> <IDENTIFIER>{
+jjtThis.setAttribute(VALUE, token.image);}
+(Parameters())?<SSOpenBraces> Commands() <SSCloseBraces>
+)
+}
+
+void Parameters():{TypeSpec type;}
+{
+<SSFunc>(type=PrimitiveType() variableDecl(type) )*<SSFunc>
+}
+
+void ValuePass():{TypeSpec type;}
+{
+<SSOpenParen>(type=PrimitiveType()  variable())*<SSCloseParen>
+}
+
+void Commands() : {}
+{
+	(try {
+	(IfPart() | SwitchPart()|For()|While()|Statement()| ProcedureCall()| DataTypes()|PrintStatement()|Error() )*
+	}catch (ParseException ex) {
+        handleError(ex.currentToken);
+	Commands();// Recursive call to continue error handling
+    	})
+}
+void PrintStatement() : {}{
+<RESERVEDWORDPRINT> Expr()(<SSComma> Expr())*<SSSemiColon>
+}
+
+void Literal() : {}
+{
+StringConst() | IntegerConst() |FloatConst() | BooleanConst()|DoubleConst()
+}
+TypeSpec PrimitiveType() #void: {}
+{
+  <RESERVEDWORDINT> {return Predefined.integerType;}
+  |<RESERVEDWORDSTRING>{return Predefined.stringType;}
+  |<RESERVEDWORDDOUBLE>{return Predefined.doubleType;}
+  |<RESERVEDWORDFLOAT>{return Predefined.floatType;}
+  |<RESERVEDWORDBOOLEAN>{return Predefined.booleanType;}
+
+
+}
+
+
+
+void IntegerConst() : {}
+{
+	(<INTEGER>
+	{
+        jjtThis.setTypeSpec(Predefined.integerType);
+        jjtThis.setAttribute(VALUE, Integer.parseInt(token.image));
+        if(Predefined.integerType!=type && typeBool){
+            System.out.println("Type Check Error This is not a Integer Line "+ token.beginLine);
+        }
+        typeBool=false;
+    })|<RESERVEDWORDREADINT>{
+        jjtThis.setAttribute(VALUE, "Input");
+    }
+}
+void BooleanConst() : {}
+{
+	<BOOLEAN>
+	{
+        if(Predefined.booleanType!=type && typeBool){
+            System.out.println("Type Check Error This is not a Boolean Line "+ token.beginLine);
+        }
+        typeBool=false;
+        jjtThis.setTypeSpec(Predefined.booleanType);
+        jjtThis.setAttribute(VALUE, Boolean.valueOf(token.image));
+    }
+}
+void FloatConst() : {}
+{
+    (<REALNUMBER>|<REAL_NUMBER>)
+    {
+        if(Predefined.realType!=type && typeBool){
+            System.out.println("Type Check Error This is not a Float Line "+ token.beginLine);
+        }
+        typeBool=false;
+        jjtThis.setTypeSpec(Predefined.floatType);
+        jjtThis.setAttribute(VALUE, Float.parseFloat(token.image));
+    }
+}
+
+void DoubleConst() : {}
+{
+    <DOUBLE>
+    {
+        if(Predefined.doubleType!=type && typeBool){
+            System.out.println("Type Check Error This is not a Double Line "+ token.beginLine);
+        }
+        typeBool=false;
+        jjtThis.setTypeSpec(Predefined.doubleType);
+        jjtThis.setAttribute(VALUE, Double.parseDouble(token.image));
+    }
+}
+
+void StringConst() : {}
+{
+	<STRING>
+	{
+        if(Predefined.stringType!=type && typeBool){
+            System.out.println("Type Check Error This is not a String Line "+token.beginLine);
+        }
+        typeBool=false;
+        jjtThis.setTypeSpec(Predefined.stringType);
+        jjtThis.setAttribute(VALUE, token.image.substring(1,token.image.length()-1));
+    }
+}
+
+
+void Expr()#void: {}
+{
+   SimpleExpr() ( (<SSNE>SimpleExpr() #NotEquals(2)| <SSL>SimpleExpr() #LessThan(2) |<SSLE>SimpleExpr() #LessEquals(2)|<SSG> SimpleExpr() #GreaterThan(2)|<SSGE>SimpleExpr()#GreaterEquals(2)|<ComparisonEquals>SimpleExpr() #Equals(2)))* 
+}
+void SimpleExpr() #void: {}
+{
+ Term() (<SSPlus>  Term() #add(2)|<SSMinus>  Term() #subtract(2)|<SSOr>  Term() #or(2))*
+
+}
+
+void Term () #void: {}
+{
+  Factor() ( <SSStar> Factor() #multiply(2)|<SSDivide> Factor() #divide(2)|<SSAnd> Factor() #and(2) )*
+}
+
+void Factor() #void: {}
+{
+LOOKAHEAD(3)getters()
+|   LOOKAHEAD(3) variable()
+|(IntegerConst()|FloatConst()|StringConst()|DoubleConst())
+|(<SSNot> Factor()#Negate(1))
+|(<SSOpenParen> Expr() <SSCloseParen>) 
+|BooleanConst()
+
+
+  
+}
+
+void Statement(): {}
+{
+   LOOKAHEAD(3)IncrementStatement()|LOOKAHEAD(3)DecrementStatement()
+|LOOKAHEAD(3)Assignment()|LOOKAHEAD(3) Declaration()
+|LOOKAHEAD(2)PlusEqualsStatement()|LOOKAHEAD(2)MinusEqualsStatement()|LOOKAHEAD(2)DivideEqualsStatement()|LOOKAHEAD(2)StarEqualsStatement()
+|LOOKAHEAD(2)DataStructManipulation()
+
+
+
+}
+void IfPart() : {}
+{
+  <RESERVEDWORDIF> <SSOpenParen> (Expr()) <SSCloseParen> <SSOpenBraces> Commands() <SSCloseBraces> (ElseIfPart())* (ElsePart())?
+
+
+}
+
+void ElseIfPart() : {}
+{
+ <RESERVEDWORDELSEIF> <SSOpenParen> (Expr()) <SSCloseParen><SSOpenBraces>  Commands() <SSCloseBraces>
+
+
+}
+
+void ElsePart() : {}
+{
+ <RESERVEDWORDELSE> <SSOpenBraces>  Commands() <SSCloseBraces>
+}
+
+void SwitchPart() : {}
+{
+     <RESERVEDWORDSWITCH> <SSOpenParen> (variable())<SSComma>(ComparisonOperator()) <SSCloseParen><SSOpenBraces>  (Cases())+ <SSCloseBraces>
+}
+void ComparisonOperator() : {}
+{
+	<SSAnd>|<SSOr>|<SSNot>|<ComparisonEquals>|<SSL>|<SSLE>|<SSG>|<SSGE>|<SSNE>
+}
+void Cases() : {}
+{
+	<RESERVEDWORDCASE> (Expr()) <SSColon> <SSOpenBraces> (LOOKAHEAD(3)Declaration()|Assignment())* <SSCloseBraces>
+}
+void Assignment() : {TypeSpec type;}
+{
+	type = variable() 
+	<SSEquals> (Expr()) <SSSemiColon>
+	{
+		jjtThis.setTypeSpec(type);
+	}
+}
+
+TypeSpec variable() : {}
+{
+    <IDENTIFIER> 
+    {
+        SymTabEntry variableId = symTabStack.lookup(token.image);
+	    if(variableId==null)
+	    {
+	    	System.out.println("VARIABLE LOOKUP ERROR*** -> "+ token.image);
+            return null;
+	    }
+	    else 
+	    {
+	    	variableId.appendLineNumber(token.beginLine);
+	    	TypeSpec type = variableId.getTypeSpec();
+	    	jjtThis.setTypeSpec(type);
+	    	jjtThis.setAttribute(ID, variableId);
+	    	return type;
+	    }
+    }
+}
+
+void variableDecl(TypeSpec type) : {}
+{
+	<IDENTIFIER> 
+	{
+            SymTabEntry variableId = symTabStack.enterLocal(token.image);
+            variableId.appendLineNumber(token.beginLine);
+            variableId.setIndex(index++);
+            variableId.setDefinition(DefinitionImpl.VARIABLE);
+            jjtThis.setAttribute(ID, variableId);
+            jjtThis.setTypeSpec(type);
+            variableId.setTypeSpec(type);
+    }
+}
+
+void Declaration(): {}
+{
+        (<RESERVEDWORDLOCAL>{
+                jjtThis.setAttribute(VALUE, "Local");
+        })?
+	type=PrimitiveType()
+        {
+        typeBool=true;
+        }
+	variableDecl(type) 
+   (LOOKAHEAD(2)((<SSEquals> (Expr()) (<SSSemiColon>))) |( (<SSComma> <IDENTIFIER>)*  (<SSSemiColon>))  )
+   {
+   	   jjtThis.setTypeSpec(type);
+           typeBool= false;
+   }
+}
+
+void IncrementStatement(): {TypeSpec type;}
+{
+	type =   variable()<SSplusplus><SSSemiColon>
+	{
+		jjtThis.setTypeSpec(type);
+	}
+}
+void DecrementStatement(): {TypeSpec type;}
+{
+	type =   variable()<SSminusminus><SSSemiColon>
+	{
+		{
+			jjtThis.setTypeSpec(type);
+		}
+	}
+}
+void PlusEqualsStatement(): {TypeSpec type;}
+{
+	type =    variable() <SSPlusEquals>(variable()|IntegerConst()) <SSSemiColon>
+	{
+		jjtThis.setTypeSpec(type);
+	}
+}
+
+void MinusEqualsStatement():{TypeSpec type;}
+{
+	type = variable() <SSMinusEquals> (variable()|IntegerConst())<SSSemiColon>
+	{
+		jjtThis.setTypeSpec(type);
+	}
+}
+void StarEqualsStatement(): {TypeSpec type;}
+{
+	type = variable() <SSMultEquals> (variable()|IntegerConst())<SSSemiColon>
+	{
+		jjtThis.setTypeSpec(type);
+	}
+}
+void DivideEqualsStatement(): {TypeSpec type;}
+{
+	type = variable() <SSDivideEquals>(variable()|IntegerConst())<SSSemiColon>
+	{
+		jjtThis.setTypeSpec(type);
+	}
+}
+void For(): {}
+{
+	<RESERVEDWORDFOR> <SSOpenParen>(DecVar()) TestCond()<SSSemiColon> IncrementCond()<SSCloseParen><SSOpenBraces> Commands() <SSCloseBraces>
+}
+
+void DecVar():{}
+{
+	Declaration()|Assignment()
+}
+
+void TestCond():{}
+{
+	Expr()
+}
+
+void WhileIncrementCond():{}
+{
+	<SSTilda>Statement()
+}
+
+void IncrementCond():{}
+{
+	Statement()
+}
+
+void While():{}
+{
+	<RESERVEDWORDWHILE> <SSOpenParen> (Expr()) <SSCloseParen><SSOpenBraces> Commands() <SSCloseBraces>
+}
+
+void DataStructManipulation() #void: {}
+{
+ LOOKAHEAD(4)SetAdd()| LOOKAHEAD(4)ListAdd()| LOOKAHEAD(4)MapAdd()|
+  LOOKAHEAD(4)SetDelete()| LOOKAHEAD(4)ListDelete()| LOOKAHEAD(4)MapDelete()|
+  LOOKAHEAD(4)ListSetVal()| LOOKAHEAD(4)HashSetVal()
+}
+
+
+void getters() #void:{}
+{
+ LOOKAHEAD(4)ListGetVal() | LOOKAHEAD(4)MapGetVal() |
+  LOOKAHEAD(4)ListGetIndex()| LOOKAHEAD(4)ListGetSize()
+|LOOKAHEAD(4)SetGetSize()|LOOKAHEAD(4)MapGetSize()
+|LOOKAHEAD(4)SetGetString()|LOOKAHEAD(4)MapGetString()
+|LOOKAHEAD(4) SetContains()
+|LOOKAHEAD(4) MapContains()
+|LOOKAHEAD(4) StringSubstring()
+|LOOKAHEAD(4) StringAppend()
+|LOOKAHEAD(4) StringGetIndex()
+|LOOKAHEAD(4) StringGetSize()
+}
+
+
+void SetAdd():{}
+{
+	variable() <SSDot> <DOTADD> <SSOpenParen> (value())  <SSCloseParen> <SSSemiColon>
+}
+
+void ListAdd():{}
+{
+	variable() <SSDot><DOTADD> <SSOpenBracket> (value()) <SSCloseBracket> <SSSemiColon>
+}
+
+void MapAdd():{}
+{
+	variable() <SSDot><DOTADD> <SSOpenBraces> (value())  (<SSComma>) (value())  <SSCloseBraces> <SSSemiColon>
+}
+
+void Position():{}
+{
+Expr()
+}
+
+void SetDelete():{}
+{
+	variable() <SSDot><DOTREMOVE> <SSOpenParen>(value())  <SSCloseParen> <SSSemiColon>
+}
+
+void ListDelete():{}
+{
+	variable() <SSDot><DOTREMOVE> <SSOpenBracket>(value()) <SSCloseBracket> <SSSemiColon>
+}
+
+void MapDelete():{}
+{
+	variable() <SSDot><DOTREMOVE> <SSOpenBraces> (value())  <SSCloseBraces> <SSSemiColon>
+}
+
+void ListGetVal():{}
+{
+	variable() <SSDot><DOTGETVAL> <SSOpenBracket> (Position()) <SSCloseBracket> 
+}
+void MapGetVal():{}
+{
+	variable() <SSDot><DOTGETVAL> <SSOpenBraces> (Position()) <SSCloseBraces> 
+}
+
+
+void ListGetIndex():{}
+{
+	variable() <SSDot><DOTGETINDEX> <SSOpenBracket> (value())  <SSCloseBracket> 
+}
+
+void StringGetIndex():{}
+{
+	variable() <SSDot><DOTGETINDEX> <SSDollar> (value())  <SSDollar> 
+}
+
+void StringGetSize():{}
+{
+	variable() <SSDot><DOTGETSIZE> <SSDollar>  <SSDollar> 
+}
+
+void StringSubstring():{}
+{
+	variable() <SSDot><DOTSUBSTRING> <SSDollar> (Position()) <SSComma> (value()) <SSDollar> 
+}
+
+void StringAppend():{}
+{
+	variable() <SSDot><DOTAPPEND> <SSDollar> (value()) <SSDollar> 
+}
+
+
+void SetContains():{}
+{
+	variable() <SSDot><DOTCONTAINS> <SSOpenParen> (value())  <SSCloseParen> 
+}
+
+void MapContains():{}
+{
+	variable() <SSDot><DOTCONTAINS> <SSOpenBraces> (value())  <SSCloseBraces> 
+}
+
+void ListGetSize():{}
+{
+	variable() <SSDot><DOTGETSIZE> <SSOpenBracket> <SSCloseBracket> 
+}
+
+void SetGetSize():{}
+{
+	variable() <SSDot><DOTGETSIZE> <SSOpenParen> <SSCloseParen> 
+}
+
+void MapGetSize():{}
+{
+	variable() <SSDot><DOTGETSIZE> <SSOpenBraces>  <SSCloseBraces> 
+}
+
+void SetGetString():{}
+{
+	variable() <SSDot><DOTGETSTRING> <SSOpenParen> <SSCloseParen> 
+}
+
+void MapGetString():{}
+{
+	variable() <SSDot><DOTGETSTRING> <SSOpenBraces>  <SSCloseBraces> 
+}
+
+void ListSetVal():{}
+{
+	variable() <SSDot><DOTSETVAL> <SSOpenBracket> (Position()) <SSComma> (value())  <SSCloseBracket> <SSSemiColon>
+}
+
+void HashSetVal():{}
+{
+	variable() <SSDot><DOTSETVAL> <SSOpenBraces> (Position()) <SSComma> (value()) <SSCloseBraces> <SSSemiColon>
+}
+
+void value():{}
+{
+Expr()
+}
+
+void KeyType() : {}
+{
+	PrimitiveType()
+}
+void ValueType() : {}
+{
+	PrimitiveType()
+}
+String Size() : {}
+{
+    Expr()
+{
+    return token.image;
+}
+}
+
+void DataTypes() #void : {}
+{
+	(Hashmap()| List() | Set())
+}
+
+
+void Hashmap (): {TypeSpec type1;TypeSpec type2;}
+{
+	<RESERVEDWORDHASHMAP>
+        <SSOpenBraces>
+        type1 = PrimitiveType()
+        <SSComma> 
+        type2 = PrimitiveType()
+        <SSCloseBraces>
+	<IDENTIFIER> 
+	{
+            SymTabEntry variableId = symTabStack.enterLocal(token.image);
+            variableId.appendLineNumber(token.beginLine);
+            variableId.setIndex(index++);
+            variableId.setDefinition(DefinitionImpl.TYPE);
+            
+           
+            TypeSpecImpl temp =  new TypeSpecImpl(TypeFormImpl.MAP);
+            temp.setIdentifier(variableId);
+            temp.setAttribute(MAP_KEY_TYPE,type1);
+            temp.setAttribute(MAP_VALUE_TYPE,type2);
+
+            variableId.setTypeSpec(temp);
+            jjtThis.setAttribute(ID, variableId);
+            jjtThis.setTypeSpec(temp);
+            
+
+    }     <SSSemiColon>
+}
+void Set (): {TypeSpec type;String count;}
+{
+         <RESERVEDWORDSET>
+	type= PrimitiveType()
+        <SSOpenParen> 
+        count = Size()
+        <SSCloseParen>
+	<IDENTIFIER> 
+{
+            SymTabEntry variableId = symTabStack.enterLocal(token.image);
+            variableId.appendLineNumber(token.beginLine);
+            variableId.setIndex(index++);
+            variableId.setDefinition(DefinitionImpl.TYPE);
+            
+
+            TypeSpecImpl temp =  new TypeSpecImpl(TypeFormImpl.SET);
+            temp.setIdentifier(variableId);
+            temp.setAttribute(SET_INDEX_TYPE,type);
+            temp.setAttribute(SET_ELEMENT_TYPE,type);
+            temp.setAttribute(SET_ELEMENT_COUNT,count);
+            
+            variableId.setTypeSpec(temp);
+            jjtThis.setAttribute(ID, variableId);
+            jjtThis.setTypeSpec(temp);
+
+           
+            
+    }
+   <SSSemiColon>
+}
+void List (): {TypeSpec type;}
+{
+	<RESERVEDWORDLIST>
+        type = PrimitiveType()
+	<IDENTIFIER> 
+	{
+            SymTabEntry variableId = symTabStack.enterLocal(token.image);
+            variableId.appendLineNumber(token.beginLine);
+            variableId.setIndex(index++);
+            variableId.setDefinition(DefinitionImpl.TYPE);
+            
+            TypeSpecImpl temp =  new TypeSpecImpl(TypeFormImpl.LIST);
+            temp.setIdentifier(variableId);
+            temp.setAttribute(LIST_INDEX_TYPE,type);
+            temp.setAttribute(LIST_ELEMENT_TYPE,type);
+
+            variableId.setTypeSpec(temp);
+            jjtThis.setAttribute(ID, variableId);
+            jjtThis.setTypeSpec(temp);
+            
+    }  <SSOpenBracket> <SSCloseBracket>  <SSSemiColon>
+}
+
+// Garbage Code???
+JAVACODE
+void processVariableDecl(Token token, int index,
+                         ArrayList<SymTabEntry> variableList) #void
+{
+    SymTabEntry variableId = symTabStack.enterLocal(token.image);
+    variableId.setIndex(index);
+    variableId.setDefinition(DefinitionImpl.VARIABLE);
+    variableId.appendLineNumber(token.beginLine);
+    variableList.add(variableId);
+}

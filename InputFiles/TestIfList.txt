@@ -1,0 +1,28 @@
+ProgramTestTwo{
+    Procedure :: main{
+     list int a[];
+     a.add[1];
+     a.add[2];
+     int i = 0;
+     int b = a.getVal[0];
+     put "Val ", b;
+     i++;
+     int c = a.getVal[i];
+     put "Val ", c;
+    if (a.getVal[i]>4){
+    put "two is less than four";
+    }elseif(a.getVal[i]>=2){
+    if(a.getVal[i]>1){
+    put "two greater than one";
+    }else{
+    put "not here";
+    }
+    }else {
+    put "else should always work";
+    }
+
+
+ }
+}
+
+

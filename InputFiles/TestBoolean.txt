@@ -1,0 +1,18 @@
+TestBoolean{
+    Procedure :: main{
+    int a = 1;
+    int b = 6;
+    boolean c= true;
+    while( c == true ){
+           put "In While loop ", a ,b;
+           a++;
+           b--;
+           c=false;
+    }
+
+ }
+    Procedure :: second{
+    }
+}
+
+

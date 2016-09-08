@@ -1,0 +1,15 @@
+ProgramTest{
+    Procedure :: main{
+        double doDob = 10.2;
+                
+        double d = doDob * 2;
+        float b = 3.2E5 * 2;
+        put "mul", b;
+        d = doDob / 2;
+        put "div", d;
+
+ 
+
+    }
+}
+
